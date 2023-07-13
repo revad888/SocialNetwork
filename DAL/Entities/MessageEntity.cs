@@ -10,7 +10,7 @@ namespace SocialNetwork.DAL.Entities
     {
         public int id { get; set; }
         public string content { get; set; }
-        public string senderId { get; set; }
-        public string recipentId { get; set; }
+        public int senderId { get; set; }
+        public int recipentId { get; set; }
     }
 }

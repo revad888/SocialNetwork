@@ -6,51 +6,54 @@ using SocialNetwork.DAL.Repositories;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SocialNetwork.BLL.Services
 {
     public class UserService
     {
+        MessageService messageService;
         IUserRepository userRepository;
-        public UserService() 
+        public UserService()
         {
             userRepository = new UserRepository();
+            messageService = new MessageService();
         }
 
         public void Register(UserRegistrationData userRegistrationData)
         {
             if (String.IsNullOrEmpty(userRegistrationData.FirstName))
-                throw new ArgumentNullException("Имя не может быть пустым!");
+                throw new ArgumentNullException();
+
             if (String.IsNullOrEmpty(userRegistrationData.LastName))
-                throw new ArgumentNullException("Фамилия не может быть пустой!");
-            if (String.IsNullOrEmpty(userRegistrationData.Password)) 
-                throw new ArgumentNullException("Пароль не может быть пустым!");
+                throw new ArgumentNullException();
+
+            if (String.IsNullOrEmpty(userRegistrationData.Password))
+                throw new ArgumentNullException();
+
             if (String.IsNullOrEmpty(userRegistrationData.Email))
-                throw new ArgumentNullException("Емаил не может быть пустым");
+                throw new ArgumentNullException();
 
             if (userRegistrationData.Password.Length < 8)
-                throw new ArgumentNullException("Длинна пароля должна быть больше 8 символов");
+                throw new ArgumentNullException();
 
             if (!new EmailAddressAttribute().IsValid(userRegistrationData.Email))
-                throw new ArgumentNullException("Некорректный формат почты!");
+                throw new ArgumentNullException();
 
             if (userRepository.FindByEmail(userRegistrationData.Email) != null)
-                throw new ArgumentNullException("Пользователь уже зарегистрирован");
+                throw new ArgumentNullException();
 
             var userEntity = new UserEntity()
             {
                 firstName = userRegistrationData.FirstName,
                 lastName = userRegistrationData.LastName,
                 password = userRegistrationData.Password,
-                email = userRegistrationData.Email,
+                email = userRegistrationData.Email
             };
 
             if (this.userRepository.Create(userEntity) == 0)
                 throw new Exception();
+
         }
 
         public User Authenticate(UserAuthenticationData userAuthenticationData)
@@ -58,7 +61,8 @@ namespace SocialNetwork.BLL.Services
             var findUserEntity = userRepository.FindByEmail(userAuthenticationData.Email);
             if (findUserEntity is null) throw new UserNotFoundException();
 
-            if (findUserEntity.password != userAuthenticationData.Password) throw new WrongPasswordException();
+            if (findUserEntity.password != userAuthenticationData.Password)
+                throw new WrongPasswordException();
 
             return ConstructUserModel(findUserEntity);
         }
@@ -66,6 +70,14 @@ namespace SocialNetwork.BLL.Services
         public User FindByEmail(string email)
         {
             var findUserEntity = userRepository.FindByEmail(email);
+            if (findUserEntity is null) throw new UserNotFoundException();
+
+            return ConstructUserModel(findUserEntity);
+        }
+
+        public User FindById(int id)
+        {
+            var findUserEntity = userRepository.FindById(id);
             if (findUserEntity is null) throw new UserNotFoundException();
 
             return ConstructUserModel(findUserEntity);
@@ -81,14 +93,20 @@ namespace SocialNetwork.BLL.Services
                 password = user.Password,
                 email = user.Email,
                 photo = user.Photo,
-                favorite_book = user.FavoriteBook,
-                favorite_movie = user.FavoriteMovie
+                favorite_movie = user.FavoriteMovie,
+                favorite_book = user.FavoriteBook
             };
 
-            if (this.userRepository.Update(updatableUserEntity) == 0) throw new Exception();
+            if (this.userRepository.Update(updatableUserEntity) == 0)
+                throw new Exception();
         }
+
         private User ConstructUserModel(UserEntity userEntity)
         {
+            var incomingMessages = messageService.GetIncomingMessagesByUserId(userEntity.id);
+
+            var outgoingMessages = messageService.GetOutcomingMessagesByUserId(userEntity.id);
+
             return new User(userEntity.id,
                           userEntity.firstName,
                           userEntity.lastName,
@@ -96,7 +114,10 @@ namespace SocialNetwork.BLL.Services
                           userEntity.email,
                           userEntity.photo,
                           userEntity.favorite_movie,
-                          userEntity.favorite_book);
+                          userEntity.favorite_book,
+                          incomingMessages,
+                          outgoingMessages
+                          );
         }
     }
 }
