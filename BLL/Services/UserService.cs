@@ -119,5 +119,21 @@ namespace SocialNetwork.BLL.Services
                           outgoingMessages
                           );
         }
+
+        public void AddFriend(UserAddingFriendData userAddingFriendData)
+        {
+            var findFriendEntity = userRepository.FindByEmail(userAddingFriendData.FriendEmail);
+            if (findFriendEntity is null)
+                throw new UserNotFoundException();
+
+            var friendEntity = new FriendEntity()
+            {
+                user_id = userAddingFriendData.UserId,
+                friend_id = findFriendEntity.id
+            };
+
+            if (this.friendRepository.Create(friendEntity) == 0)
+                throw new Exception();
+        }
     }
 }

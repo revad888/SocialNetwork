@@ -21,7 +21,8 @@ namespace SocialNetwork
         public static MessageSendingView messageSendingView;
         public static UserIncomingMessageView userIncomingMessageView;
         public static UserOutcomingMessageView userOutcomingMessageView;
-
+        public static UserFriendsView friendsView;
+        public static AddFriendsView addFriends;
         static void Main(string[] args)
         {
             userService = new UserService();
